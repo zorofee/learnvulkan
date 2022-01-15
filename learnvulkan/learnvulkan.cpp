@@ -4,8 +4,10 @@
 #include "Instance.h"
 #include "ValidationLayers.h"
 #include "PhysicalDevicesAndQueueFamilies.h"
+#include "DescriptorSet.h"
+#include "ShaderTextures.h"
 int main()
 {
-	PhysicalDevicesAndQueueFamilies::main();
+	ShaderTextures::main();
 	return 0;
 }

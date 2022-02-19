@@ -14,7 +14,7 @@ namespace ValidationLayers
     const uint32_t HEIGHT = 600;
 
     const std::vector<const char*> validationLayers = {
-        "VK_LAYER_KHRONOS_validation"
+        "VK_LAYER_NV_optimus"
     };
 
 #ifdef NDEBUG
@@ -125,6 +125,24 @@ namespace ValidationLayers
             if (vkCreateInstance(&createInfo, nullptr, &instance) != VK_SUCCESS) {
                 throw std::runtime_error("failed to create instance!");
             }
+
+
+
+            uint32_t deviceCount = 0;
+            vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
+
+            if (deviceCount == 0) {
+                throw std::runtime_error("failed to find GPUs with Vulkan support!");
+            }
+
+            std::vector<VkPhysicalDevice> devices(deviceCount);
+            vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
+
+            uint32_t count;
+            std::vector<VkExtensionProperties> extensionProperties;
+            (vkEnumerateDeviceExtensionProperties(devices[0], nullptr, &count, nullptr));
+            extensionProperties.resize(count);
+            (vkEnumerateDeviceExtensionProperties(devices[0], nullptr, &count, extensionProperties.data()));
         }
 
         void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo) {
@@ -191,6 +209,40 @@ namespace ValidationLayers
             return VK_FALSE;
         }
     };
+
+
+    void test()
+    {
+        {
+            VkInstance test_instance;
+            VkApplicationInfo appInfo{};
+            appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+
+            VkInstanceCreateInfo createInfo{};
+            createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+            createInfo.pApplicationInfo = &appInfo;
+
+            if (vkCreateInstance(&createInfo, nullptr, &test_instance) != VK_SUCCESS) {
+                throw std::runtime_error("failed to create instance!");
+            }
+
+            uint32_t deviceCount = 0;
+            vkEnumeratePhysicalDevices(test_instance, &deviceCount, nullptr);
+
+            if (deviceCount == 0) {
+                throw std::runtime_error("failed to find GPUs with Vulkan support!");
+            }
+
+            std::vector<VkPhysicalDevice> devices(deviceCount);
+            vkEnumeratePhysicalDevices(test_instance, &deviceCount, devices.data());
+
+            uint32_t count;
+            std::vector<VkExtensionProperties> extensionProperties;
+            (vkEnumerateDeviceExtensionProperties(devices[0], nullptr, &count, nullptr));
+            extensionProperties.resize(count);
+            (vkEnumerateDeviceExtensionProperties(devices[0], nullptr, &count, extensionProperties.data()));
+        }
+    }
 
     int main() {
         HelloTriangleApplication app;

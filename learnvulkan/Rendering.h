@@ -12,13 +12,16 @@
 #include <optional>
 #include <set>
 
+#include "RenderingTest.h"
+#include "RenderingSingleFBO.h"
+
 namespace Rendering
 {
 
     const uint32_t WIDTH = 800;
     const uint32_t HEIGHT = 600;
 
-    const int MAX_FRAMES_IN_FLIGHT = 2;
+    const int MAX_FRAMES_IN_FLIGHT = 3;
 
     const std::vector<const char*> validationLayers = {
         "VK_LAYER_KHRONOS_validation"
@@ -108,6 +111,8 @@ namespace Rendering
         std::vector<VkFence> imagesInFlight;
         size_t currentFrame = 0;
 
+        RenderingTest::TestApplicationSingleFBO vkTest;
+
         void initWindow() {
             glfwInit();
 
@@ -131,6 +136,18 @@ namespace Rendering
             createCommandPool();
             createCommandBuffers();
             createSyncObjects();
+
+            vkTest.createInstance(instance);
+            vkTest.createLogicalDevice(device);
+            vkTest.createRenderPass(VK_FORMAT_B8G8R8A8_SRGB);
+            VkExtent2D _swapChainExtent = { 400,300 };
+            vkTest.createGraphicsPipeline(_swapChainExtent);
+            vkTest.createFramebuffers(swapChainFramebuffers[0]);
+            uint32_t _queueFamilyIndex = 0;
+            vkTest.createCommandPool(_queueFamilyIndex);
+            vkTest.createCommandBuffers(_swapChainExtent);
+            //vkTest.createSyncObjects(imageAvailableSemaphores,renderFinishedSemaphores,inFlightFences,imagesInFlight);
+            vkTest.createSyncObjects(MAX_FRAMES_IN_FLIGHT, swapChainImages.size());
         }
 
         void mainLoop() {
@@ -433,8 +450,8 @@ namespace Rendering
         }
 
         void createGraphicsPipeline() {
-            auto vertShaderCode = readFile("shaders/vert.spv");
-            auto fragShaderCode = readFile("shaders/frag.spv");
+            auto vertShaderCode = readFile("shaders/RenderingVert.spv");
+            auto fragShaderCode = readFile("shaders/RenderingFrag.spv");
 
             VkShaderModule vertShaderModule = createShaderModule(vertShaderCode);
             VkShaderModule fragShaderModule = createShaderModule(fragShaderCode);
@@ -648,6 +665,16 @@ namespace Rendering
         }
 
         void drawFrame() {
+#if 0
+           vkWaitForFences(device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
+
+           uint32_t imageIndex;
+           vkAcquireNextImageKHR(device, swapChain, UINT64_MAX, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
+           vkTest.drawFrame2(graphicsQueue, presentQueue, currentFrame, imageIndex, swapChain);
+
+           currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
+#else
+           
             vkWaitForFences(device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
 
             uint32_t imageIndex;
@@ -680,6 +707,9 @@ namespace Rendering
                 throw std::runtime_error("failed to submit draw command buffer!");
             }
 
+            //if(imageIndex == 2)
+            vkTest.drawFrame(graphicsQueue,  0, 0);
+
             VkPresentInfoKHR presentInfo{};
             presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
 
@@ -695,6 +725,7 @@ namespace Rendering
             vkQueuePresentKHR(presentQueue, &presentInfo);
 
             currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
+#endif
         }
 
         VkShaderModule createShaderModule(const std::vector<char>& code) {

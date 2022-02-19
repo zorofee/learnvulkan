@@ -181,11 +181,46 @@ namespace PhysicalDevicesAndQueueFamilies
 
 	};
 
+	void test()
+	{
+		{
+			VkInstance test_instance;
+			VkApplicationInfo appInfo{};
+			appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+
+			VkInstanceCreateInfo createInfo{};
+			createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+			createInfo.pApplicationInfo = &appInfo;
+
+			if (vkCreateInstance(&createInfo, nullptr, &test_instance) != VK_SUCCESS) {
+				throw std::runtime_error("failed to create instance!");
+			}
+
+			uint32_t deviceCount = 0;
+			vkEnumeratePhysicalDevices(test_instance, &deviceCount, nullptr);
+
+			if (deviceCount == 0) {
+				throw std::runtime_error("failed to find GPUs with Vulkan support!");
+			}
+
+			std::vector<VkPhysicalDevice> devices(deviceCount);
+			vkEnumeratePhysicalDevices(test_instance, &deviceCount, devices.data());
+
+			uint32_t count;
+			std::vector<VkExtensionProperties> extensionProperties;
+			(vkEnumerateDeviceExtensionProperties(devices[0], nullptr, &count, nullptr));
+			extensionProperties.resize(count);
+			(vkEnumerateDeviceExtensionProperties(devices[0], nullptr, &count, extensionProperties.data()));
+		}
+	}
+
+
 	int main()
 	{
 		HelloTriangleApp app;
 
-		app.run();
+		test();
+		//app.run();
 
 		return 0;
 	}
